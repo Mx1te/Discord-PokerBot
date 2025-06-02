@@ -9,27 +9,28 @@ tableCards = []
 
 class pokerCard:
 
-    def __init__(self,face,value):
+    def __init__(self, face, value, symbol):
         self.face = face
         self.value = value
+        self.symbol = symbol
         deck.append(self)
     
     def create_deck():
         deck.clear
         for i in range(1,11):
-            pokerCard('diamonds'+str(i),i)
-            pokerCard('clubs'+str(i),i)
-            pokerCard('hearts'+str(i),i)
-            pokerCard('spades'+str(i),i)
+            pokerCard('diamonds',i,str(i))
+            pokerCard('clubs',i,str(i))
+            pokerCard('hearts',i,str(i))
+            pokerCard('spades',i,str(i))
 
         pictureCards = ['Jack','Queen','King','Ace']
         i = 11
 
         for x in pictureCards:
-            pokerCard('diamonds' + x, i)
-            pokerCard('clubs' + x, i)
-            pokerCard('hearts' + x, i)
-            pokerCard('spades' + x, i)
+            pokerCard('diamonds', i, x)
+            pokerCard('clubs' , i, x)
+            pokerCard('hearts' , i, x)
+            pokerCard('spades' , i, x)
             i += 1
 
 
@@ -64,8 +65,8 @@ giveHoleCards(numPlayer)
 
 for x, y in playerHands:
     print('------')
-    print(x.face)
-    print(y.face)
+    print(x.face + x.symbol)
+    print(y.face + y.symbol)
     
 
 giveFlop()
@@ -73,4 +74,4 @@ giveFlop()
 print('~~~~~~~~~')
 
 for x in tableCards:
-    print(x.face)
+    print(x.face + x.symbol)
