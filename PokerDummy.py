@@ -85,7 +85,32 @@ def giveStreetCard():   # legt eine weitere Karte auf Tisch
     tableCards.append(deck.pop())
 
 
-def checkForDoTrQu(hand):     #Prüft nach Pair/ThreeofKind/Quads
+def setTableCards(card_list):
+    """
+    card_list: Liste von Tupeln im Format (face, value, symbol)
+    Beispiel: [("hearts", 10, "10"), ("spades", 11, "Jack")]
+    """
+    tableCards.clear()
+    for face, value, symbol in card_list:
+        card = pokerCard(face, value, symbol)
+        tableCards.append(card)
+
+
+def setPlayerHand(player_id, card_list):
+    """
+    card_list: Liste von Tupeln (face, value, symbol)
+    """
+    # Spieler finden
+    player = next((p for p in Players if p.id == player_id), None)
+    if player:
+        hand = []
+        for face, value, symbol in card_list:
+            card = pokerCard(face, value, symbol)
+            hand.append(card)
+        player.hand = hand
+
+
+def checkForDoTrQu(hand:list):     #Prüft nach Pair/ThreeofKind/Quads
     # Hole alle Kartenwerte
     values = [card.value for card in hand]
 
@@ -103,40 +128,71 @@ def checkForDoTrQu(hand):     #Prüft nach Pair/ThreeofKind/Quads
         "quads": quad_cards
     }
 
+def checkForStraight(hand: list):
+    # Extract and deduplicate values
+    values = sorted(set([card.value for card in hand]))
+
+    longest_streak = []
+    temp_streak = [values[0]]
+
+    for i in range(1, len(values)):
+        if values[i] == values[i-1] + 1:
+            temp_streak.append(values[i])
+        else:
+            if len(temp_streak) >= 5:
+                longest_streak = temp_streak[:]
+            temp_streak = [values[i]]
+
+    if len(temp_streak) >= 5:
+        longest_streak = temp_streak
+
+    if longest_streak:
+        # Find corresponding card objects (prioritize highest cards)
+        straight_cards = []
+        for v in reversed(longest_streak):  # from high to low
+            for c in sorted(hand, key=lambda c: -c.value):
+                if c.value == v and c not in straight_cards:
+                    straight_cards.append(c)
+                    break
+            if len(straight_cards) == 5:
+                break
+
+        return straight_cards
+    return None
 
 def checkHands():
+    
     i = 1
 
     for p in Players:
+        StraightFlush = False
+        FaceCheck = []
+
         HandToCheck = p.hand + tableCards
 
-        print('Hand of player '+ str(i) + ':')
-        i += 1
-
-        for x in HandToCheck:
-            print(x.face + x.symbol)
-
-        ## Check pair
-
-
         ergebnis = checkForDoTrQu(HandToCheck)
+        straight = checkForStraight(HandToCheck)
+
+       # for x in straight:
+       #     FaceCheck.append(x)
+       #     if FaceCheck[FaceCheck.index(x)]
 
         if ergebnis["quads"]:
             p.setRanking(8, ergebnis["quads"])
         elif ergebnis["triples"] and ergebnis["pairs"]:
             p.setRanking(7, ergebnis["triples"] + ergebnis["pairs"])
+        elif straight:
+            p.setRanking(5, straight)
         elif ergebnis["triples"]:
-            p.setRanking(5, ergebnis["triples"])
+            p.setRanking(4, ergebnis["triples"])
         elif len(set([c.value for c in ergebnis["pairs"]])) >= 2:
             p.setRanking(3, ergebnis["pairs"])  # Doppelpaar
         elif ergebnis["pairs"]:
             p.setRanking(2, ergebnis["pairs"])  # Ein Paar
 
-        
-
         print()
 
- 
+
 pokerCard.create_deck()
 
 shuffleDeck()
@@ -155,6 +211,14 @@ giveFlop()
 giveStreetCard()
 giveStreetCard()
 
+setTableCards([
+    ("hearts", 9, "9"),
+    ("spades", 9, "9"),
+    ("clubs", 9, "9"),
+    ("diamonds", 11, "Jack"),
+    ("hearts", 11, "Jack")
+])
+
 print("Gemeinsame Karten auf dem Tisch:")
 for x in tableCards:
     print(x.face + x.symbol)
@@ -167,7 +231,9 @@ ranking_namen = {
     0: "Keine Wertung",
     2: "Paar",
     3: "Doppelpaar",
-    5: "Drilling",
+    4: "Drilling",
+    5: "Straße",
+    7: "Full House",
     8: "Vierling"
 }
 
